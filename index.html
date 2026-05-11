@@ -118,7 +118,7 @@
         @keyframes rotate { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.1) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
 
         .sparkle { position: absolute; font-size: 2rem; opacity: 0; pointer-events: none; }
-        .show-sparkle { animation: sparkle-anim 1s forwards; }
+        .show-sparkle { animation: sparkle-anim 2s forwards; }
         @keyframes sparkle-anim { 0% { transform: scale(0) translate(0,0); opacity: 1; } 100% { transform: scale(1.5) translate(var(--tx), var(--ty)); opacity: 0; } }
 
         .balance-section { background: white; border-radius: 20px; padding: 15px; margin-bottom: 10px; text-align: center; border: 2px solid transparent; }
@@ -289,7 +289,103 @@
             .amount { font-size: 1.6rem; }
             .btn-get { font-size: 1rem; }
         }
-    </style>
+    
+        /* ルーレット用スタイル */
+        .roulette-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+            text-align: center;
+        }
+        .roulette-display {
+            font-size: 1.1rem; /* 1.5remから少し小さくして1行に収まるように調整 */
+            font-weight: bold;
+            color: #ff69b4;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+            white-space: nowrap; /* 折り返しを禁止 */
+        }
+        .btn-roulette {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            width: 100%;
+            box-shadow: 0 4px 0 #cc8400;
+        }
+        .btn-roulette:disabled {
+            background: #ccc;
+            box-shadow: none;
+            transform: none;
+            cursor: default;
+        }
+
+        /* 浮遊お祝いアニメーション */
+        .floating-celeb {
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            width: 180px; /* 120pxから1.5倍に拡大 */
+            height: 180px; /* 120pxから1.5倍に拡大 */
+            object-fit: contain;
+            animation: floatUpAndFade 1.5s ease-out forwards;
+        }
+        @keyframes floatUpAndFade {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -120%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+        }
+
+        /* モーダルルーレット */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 20000;
+        }
+        .roulette-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 90%;
+            width: 320px;
+            border: 10px solid #fff0f5;
+        }
+        .spinning {
+            animation: spinText 0.1s linear infinite;
+        }
+        @keyframes spinText {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+
+        /* 金利確認ボタンのスタイル */
+        .btn-check-rate {
+            background: #fff0f5;
+            color: #ff69b4;
+            border: 1px solid #ffb6c1;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 5px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .btn-check-rate:hover {
+            background: #ffe4e1;
+        }
+</style>
 </head>
 <body>
 
@@ -321,11 +417,17 @@
             </div>
 
             <div class="bank-section">
-                <div class="bank-label">🌟 まほうのぎんこう</div>
+                <div class="bank-label">🌟 まほうのぎんこう<button class="btn-check-rate" onclick="showRatePopup(1)">💰 きんり</button></div>
                 <div class="bank-row"><span>あずけた額:</span><span id="principal-1">0</span>円</div>
                 <div class="bank-row bank-total"><span>いまの合計:</span><span id="bank-1">0</span>円</div>
                 <div class="profit-text" id="profit-1">＋0円 おトク！</div>
             </div>
+            <div class="roulette-container" id="roulette-section-1">
+                <div class="bank-label">🎰 こんげつの金利ルーレット</div>
+                <div class="roulette-display" id="roulette-result-1">まだ回してないよ！</div>
+                <button class="btn-roulette" id="btn-spin-1" onclick="startRoulette(1)">ルーレットをまわす！</button>
+            </div>
+
 
             <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <select id="input-1" style="grid-column: span 2;"></select>
@@ -367,11 +469,17 @@
             </div>
 
             <div class="bank-section">
-                <div class="bank-label">🌟 まほうのぎんこう</div>
+                <div class="bank-label">🌟 まほうのぎんこう<button class="btn-check-rate" onclick="showRatePopup(2)">💰 きんり</button></div>
                 <div class="bank-row"><span>あずけた額:</span><span id="principal-2">0</span>円</div>
                 <div class="bank-row bank-total"><span>いまの合計:</span><span id="bank-2">0</span>円</div>
                 <div class="profit-text" id="profit-2">＋0円 おトク！</div>
             </div>
+            <div class="roulette-container" id="roulette-section-2">
+                <div class="bank-label">🎰 こんげつの金利ルーレット</div>
+                <div class="roulette-display" id="roulette-result-2">まだ回してないよ！</div>
+                <button class="btn-roulette" id="btn-spin-2" onclick="startRoulette(2)">ルーレットをまわす！</button>
+            </div>
+
 
             <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <select id="input-2" style="grid-column: span 2;"></select>
@@ -399,8 +507,70 @@
         <button class="btn-reset" onclick="resetAll()">データをすべてリセットする</button>
     </div>
 
-    <script>
-        function setupSelects() {
+    
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+        "apiKey": "AIzaSyATLBQ9ZwfxTJXma2nlmzfbMpkVBdz4fdU",
+        "authDomain": "my-okozukaicho.firebaseapp.com",
+        "projectId": "my-okozukaicho",
+        "storageBucket": "my-okozukaicho.firebasestorage.app",
+        "messagingSenderId": "623017704563",
+        "appId": "1:623017704563:web:daaa334889bda88b9f3e06"
+};
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const stateDoc = doc(db, "okozukaicho", "global_state");
+
+        let state = {
+            1: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+            2: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+            currentDate: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
+            interestRates: {}
+        };
+
+        let isInitialLoad = true;
+
+        // Firebaseからのリアルタイム同期
+        onSnapshot(stateDoc, (snapshot) => {
+            if (snapshot.exists()) {
+                state = snapshot.data();
+                if (isInitialLoad) {
+                    document.getElementById('current-year').value = state.currentDate.year;
+                    document.getElementById('current-month').value = state.currentDate.month;
+                    isInitialLoad = false;
+                }
+                updateDisplay(1, false);
+                updateDisplay(2, false);
+            }
+        });
+
+        async function saveState() {
+            localStorage.setItem('okozukai_state_v3', JSON.stringify(state));
+            try {
+                await setDoc(stateDoc, state);
+            } catch (e) {
+                console.error("Error saving to Firebase:", e);
+            }
+        }
+
+        window.resetAll = async function() {
+            if(confirm('すべてのおかねとメダルのデータをけして、さいしょからにしますか？ (クラウドのデータもきえます)')) {
+                state = {
+                    1: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+                    2: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+                    currentDate: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
+                    interestRates: {}
+                };
+                await saveState();
+                location.reload();
+            }
+        }
+
+        window.setupSelects = function() {
             const currentYear = new Date().getFullYear();
             const years = [currentYear - 1, currentYear, currentYear + 1];
             const months = Array.from({length: 12}, (_, i) => i + 1);
@@ -408,43 +578,43 @@
             
             [1, 2].forEach(id => {
                 const amtSelect = document.getElementById(`input-${id}`);
-                amounts.forEach(a => amtSelect.add(new Option(`${a}円`, a)));
+                amounts.forEach(a => {
+                   if (![...amtSelect.options].some(o => o.value == a)) {
+                       amtSelect.add(new Option(`${a}円`, a));
+                   }
+                });
                 amtSelect.value = 100;
 
                 const ySelect = document.getElementById(`dep-year-${id}`);
-                years.forEach(y => ySelect.add(new Option(`${y}年`, y)));
+                years.forEach(y => {
+                    if (![...ySelect.options].some(o => o.value == y)) {
+                        ySelect.add(new Option(`${y}年`, y));
+                    }
+                });
                 ySelect.value = currentYear;
 
                 const mSelect = document.getElementById(`dep-month-${id}`);
-                months.forEach(m => mSelect.add(new Option(`${m}月`, m)));
+                months.forEach(m => {
+                    if (![...mSelect.options].some(o => o.value == m)) {
+                        mSelect.add(new Option(`${m}月`, m));
+                    }
+                });
                 mSelect.value = new Date().getMonth() + 1;
             });
 
             const cySelect = document.getElementById('current-year');
-            years.forEach(y => cySelect.add(new Option(y, y)));
-            cySelect.value = currentYear;
+            years.forEach(y => {
+                if (![...cySelect.options].some(o => o.value == y)) {
+                    cySelect.add(new Option(y, y));
+                }
+            });
 
             const cmSelect = document.getElementById('current-month');
-            months.forEach(m => cmSelect.add(new Option(m, m)));
-            cmSelect.value = new Date().getMonth() + 1;
-        }
-
-        // 保存データの読み込み（v3: メダルと累計データの追加）
-        let state = JSON.parse(localStorage.getItem('okozukai_state_v3')) || {
-            1: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
-            2: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
-            currentDate: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 }
-        };
-
-        function saveState() {
-            localStorage.setItem('okozukai_state_v3', JSON.stringify(state));
-        }
-
-        function resetAll() {
-            if(confirm('すべてのおかねとメダルのデータをけして、さいしょからにしますか？')) {
-                localStorage.removeItem('okozukai_state_v3');
-                location.reload();
-            }
+            months.forEach(m => {
+                if (![...cmSelect.options].some(o => o.value == m)) {
+                    cmSelect.add(new Option(m, m));
+                }
+            });
         }
 
         function calculateBank(id) {
@@ -457,23 +627,35 @@
             state[id].deposits.forEach(d => {
                 principal += d.amount;
                 const depTotalMonths = d.year * 12 + d.month;
-                const diff = Math.max(0, curTotalMonths - depTotalMonths);
-                // 1ヶ月につき10%増やし、結果を10円単位で四捨五入する
-                const rawVal = d.amount * Math.pow(1.1, diff);
-                const roundedVal = Math.round(rawVal / 10) * 10;
+                
+                let currentVal = d.amount;
+                for (let m = depTotalMonths; m < curTotalMonths; m++) {
+                    const y = Math.floor(m / 12);
+                    const mon = (m % 12) + 1;
+                    const key = `${y}-${mon}`;
+                    const rate = (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) 
+                                ? state.interestRates[key][id] 
+                                : 10;
+                    currentVal = currentVal * (1 + rate / 100);
+                }
+                const roundedVal = Math.round(currentVal / 10) * 10;
                 total += roundedVal;
             });
             return { principal, total };
         }
 
-        function syncAll() {
+        window.syncAll = function() {
             state.currentDate.year = parseInt(document.getElementById('current-year').value);
             state.currentDate.month = parseInt(document.getElementById('current-month').value);
             updateDisplay(1);
             updateDisplay(2);
         }
 
-        function updateDisplay(id) {
+        window.updateDisplay = function(id, shouldSave = true) {
+            const y = parseInt(document.getElementById('current-year').value);
+            const mon = parseInt(document.getElementById('current-month').value);
+            const key = `${y}-${mon}`;
+
             document.getElementById(`cash-${id}`).textContent = state[id].cash;
             const res = calculateBank(id);
             const totalAssets = state[id].cash + res.total;
@@ -483,31 +665,56 @@
             const profit = Math.round(res.total) - Math.round(res.principal);
             document.getElementById(`profit-${id}`).textContent = `＋${profit}円 おトク！`;
             
-            // メダルチェック
             checkMedals(id, Math.round(totalAssets), state[id].totalSpent, state[id].totalDepEver);
             renderMedals(id);
 
             const histDiv = document.getElementById(`history-${id}`);
             histDiv.innerHTML = state[id].history.slice(-3).reverse().join('<br>');
-            saveState();
+
+            // 金利ルーレット表示の更新
+            const rateValDisp = document.getElementById(`rate-val-${id}`);
+            const rouletteResultDisp = document.getElementById(`roulette-result-${id}`);
+            const spinBtn = document.getElementById(`btn-spin-${id}`);
+
+            if (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) {
+                const rate = state.interestRates[key][id];
+                if (rateValDisp) rateValDisp.textContent = '+' + rate + ' %';
+                if (rouletteResultDisp) {
+                    const curY = document.getElementById('current-year').value; const curM = document.getElementById('current-month').value; rouletteResultDisp.textContent = curY + 'ねん ' + curM + 'がつのきんり: +' + rate + '% !';
+                    rouletteResultDisp.style.color = '#ff69b4';
+                }
+                if (spinBtn) {
+                    spinBtn.disabled = true;
+                    spinBtn.textContent = 'もう回したよ';
+                }
+            } else {
+                if (rateValDisp) rateValDisp.textContent = '?? %';
+                if (rouletteResultDisp) {
+                    rouletteResultDisp.textContent = 'まだ回してないよ！';
+                    rouletteResultDisp.style.color = '#888';
+                }
+                if (spinBtn) {
+                    spinBtn.disabled = false;
+                    spinBtn.textContent = 'ルーレットをまわす！';
+                }
+            }
+
+            if (shouldSave) saveState();
         }
 
         function checkMedals(id, currentTotal, currentSpent, currentDep) {
-            // 総額メダル (100円ごとにチェック。過去最高額を超えたときだけ新規判定)
             for(let m = 100; m <= currentTotal; m += 100) {
                 if(!state[id].earnedMedals.total.includes(m)) {
                     state[id].earnedMedals.total.push(m);
                     state[id].history.push(`🏆ぜんぶで${m}円 達成メダル！`);
                 }
             }
-            // 支出メダル
             for(let m = 100; m <= currentSpent; m += 100) {
                 if(!state[id].earnedMedals.spent.includes(m)) {
                     state[id].earnedMedals.spent.push(m);
                     state[id].history.push(`🍎${m}円 お買い物経験メダル！`);
                 }
             }
-            // 預金メダル
             for(let m = 100; m <= currentDep; m += 100) {
                 if(!state[id].earnedMedals.dep.includes(m)) {
                     state[id].earnedMedals.dep.push(m);
@@ -523,39 +730,39 @@
             state[id].earnedMedals.total.forEach(m => {
                 const el = document.createElement('div');
                 el.className = 'medal m-total'; 
-                el.setAttribute('data-icon', '💙'); // ブルーハート
+                el.setAttribute('data-icon', '💙');
                 el.title = `ぜんぶで${m}円`;
                 container.appendChild(el);
             });
             state[id].earnedMedals.dep.forEach(m => {
                 const el = document.createElement('div');
                 el.className = 'medal m-dep';
-                el.setAttribute('data-icon', '💜'); // パープルハート
+                el.setAttribute('data-icon', '💜');
                 el.title = `あずけた合計${m}円`;
                 container.appendChild(el);
             });
             state[id].earnedMedals.spent.forEach(m => {
                 const el = document.createElement('div');
                 el.className = 'medal m-spent';
-                el.setAttribute('data-icon', '🩷'); // ピンクハート
+                el.setAttribute('data-icon', '🩷');
                 el.title = `つかった合計${m}円`;
                 container.appendChild(el);
             });
         }
 
-        function handleAddMoney(id) {
+        window.handleAddMoney = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
             state[id].cash += amount;
             state[id].history.push(`${amount}円 もらった！`);
-            celebrate(id);
+            celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
             updateDisplay(id);
         }
 
-        function handleSpendMoney(id) {
+        window.handleSpendMoney = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
             if (state[id].cash >= amount) {
                 state[id].cash -= amount;
-                state[id].totalSpent += amount; // 累計支出を記録
+                state[id].totalSpent += amount;
                 state[id].history.push(`${amount}円 つかった`);
                 updateDisplay(id);
             } else {
@@ -563,22 +770,23 @@
             }
         }
 
-        function handleDeposit(id) {
+        window.handleDeposit = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
             const year = parseInt(document.getElementById(`dep-year-${id}`).value);
             const month = parseInt(document.getElementById(`dep-month-${id}`).value);
             if (state[id].cash >= amount) {
                 state[id].cash -= amount;
-                state[id].totalDepEver += amount; // 累計預金を記録
+                state[id].totalDepEver += amount;
                 state[id].deposits.push({ amount, year, month });
                 state[id].history.push(`${year}/${month}に ${amount}円 あずけた！`);
+                celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
                 updateDisplay(id);
             } else {
                 alert('おかねが たりないよ！');
             }
         }
 
-        function handleWithdraw(id) {
+        window.handleWithdraw = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
             const res = calculateBank(id);
             const curY = parseInt(document.getElementById('current-year').value);
@@ -586,7 +794,6 @@
             const curTotalMonths = curY * 12 + curM;
 
             if (amount === 0) {
-                // 全額引き出し
                 if (res.total > 0) {
                     state[id].cash += res.total;
                     state[id].deposits = [];
@@ -605,13 +812,11 @@
                     const currentV = Math.round((d.amount * Math.pow(1.1, diff)) / 10) * 10;
 
                     if (currentV > remaining) {
-                        // この預金の一部を削る
                         const newV = currentV - remaining;
                         d.amount = newV / Math.pow(1.1, diff);
                         remaining = 0;
                         break;
                     } else {
-                        // この預金を使い切る
                         remaining -= currentV;
                         state[id].deposits.splice(i, 1);
                         i--;
@@ -625,29 +830,140 @@
             }
         }
 
-        function celebrate(id) {
-            const img = document.getElementById(`img-${id}`);
-            img.classList.add('happy');
-            const container = document.getElementById(`sparkles-${id}`);
-            for(let i=0; i<8; i++) {
+        window.celebrateNear = function(elementId, id) {
+            const sourceImg = document.getElementById(elementId);
+            const floatImg = document.createElement('img');
+            floatImg.src = sourceImg.src;
+            floatImg.className = 'floating-celeb';
+            floatImg.style.left = '50%';
+            floatImg.style.top = '50%';
+            document.body.appendChild(floatImg);
+            
+            for(let i=0; i<25; i++) {
                 const s = document.createElement('div');
                 s.className = 'sparkle show-sparkle';
-                s.textContent = ['✨','💖','🌟','🌸'][Math.floor(Math.random()*4)];
-                s.style.setProperty('--tx', (Math.random()-0.5)*200 + 'px');
-                s.style.setProperty('--ty', (Math.random()-0.5)*200 + 'px');
+                s.textContent = ['✨','💖','🌟','🌸','💰','💎'][Math.floor(Math.random()*6)];
+                s.style.setProperty('--tx', (Math.random()-0.5)*300 + 'px');
+                s.style.setProperty('--ty', (Math.random()-0.5)*300 + 'px');
                 s.style.left = '50%'; s.style.top = '50%';
-                container.appendChild(s);
-                setTimeout(() => s.remove(), 1000);
+                s.style.position = 'fixed';
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 2500);
             }
-            setTimeout(() => { img.classList.remove('happy'); }, 2000);
+            setTimeout(() => floatImg.remove(), 2500);
         }
 
+        window.startRoulette = function(id) {
+            const y = parseInt(document.getElementById('current-year').value);
+            const mon = parseInt(document.getElementById('current-month').value);
+            const key = `${y}-${mon}`;
+            
+            if (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) {
+                alert('今月はもう回したよ！');
+                return;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            const modal = document.createElement('div');
+            modal.className = 'roulette-modal';
+            modal.innerHTML = `
+                <h2 style="color: #ff69b4;">✨ きんりルーレット ✨</h2>
+                <div class="roulette-display spinning" id="modal-spin-text">??? %</div>
+                <p>何％になるかな...？</p>
+            `;
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            let count = 0;
+            const rates = [10, 20, 50, 100, 0];
+            const interval = setInterval(() => {
+                document.getElementById('modal-spin-text').textContent = rates[Math.floor(Math.random() * rates.length)] + ' %';
+                count++;
+                if (count > 20) {
+                    clearInterval(interval);
+                    finishRoulette(id, key, overlay);
+                }
+            }, 100);
+        }
+
+        function finishRoulette(id, key, overlay) {
+            const rand = Math.random() * 100;
+            let result = 10;
+            if (rand < 50) result = 10;
+            else if (rand < 80) result = 20;
+            else if (rand < 95) result = 50;
+            else if (rand < 99) result = 100;
+            else result = 0;
+
+            if (!state.interestRates) state.interestRates = {};
+            if (!state.interestRates[key]) state.interestRates[key] = {};
+            state.interestRates[key][id] = result;
+
+            document.getElementById('modal-spin-text').className = 'roulette-display';
+            document.getElementById('modal-spin-text').style.fontSize = '3rem';
+            document.getElementById('modal-spin-text').textContent = result + ' %';
+            
+            const btn = document.createElement('button');
+            btn.className = 'btn-get';
+            btn.style.marginTop = '20px';
+            btn.textContent = 'やったー！';
+            btn.onclick = () => {
+                overlay.remove();
+                celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
+                updateDisplay(id);
+            };
+            overlay.firstChild.appendChild(btn);
+            saveState();
+        }
+
+        // Initialize
         setupSelects();
-        document.getElementById('current-year').value = state.currentDate.year;
-        document.getElementById('current-month').value = state.currentDate.month;
-        updateDisplay(1);
-        updateDisplay(2);
-    </script>
+        
+        const docSnap = await getDoc(stateDoc);
+        if (docSnap.exists()) {
+            state = docSnap.data();
+            document.getElementById('current-year').value = state.currentDate.year;
+            document.getElementById('current-month').value = state.currentDate.month;
+            updateDisplay(1, false);
+            updateDisplay(2, false);
+        } else {
+            await saveState();
+        }
+    
+        window.showRatePopup = function(id) {
+            const y = parseInt(document.getElementById('current-year').value);
+            const mon = parseInt(document.getElementById('current-month').value);
+            const key = y + '-' + mon;
+            
+            let rateText = "まだ決まっていないよ！";
+            
+            if (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) {
+                rateText = "+" + state.interestRates[key][id] + " % だよ！";
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+            
+            const modal = document.createElement('div');
+            modal.className = 'roulette-modal';
+            modal.style.borderColor = (id === 1 ? '#ffb6c1' : '#add8e6');
+            modal.innerHTML = '<h3 style="color: ' + (id === 1 ? '#ff69b4' : '#1e90ff') + '; font-size: 1.1rem; margin-bottom: 15px;">' +
+                    '✨ ' + y + 'ねん ' + mon + 'がつ の きんり ✨' +
+                '</h3>' +
+                '<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin: 20px 0;">' +
+                    rateText +
+                '</div>' +
+                '<p style="font-size: 0.8rem; color: #888;">(ルーレットで決まった数字だよ)</p>' +
+                '<button class="btn-get" style="margin-top: 20px; padding: 8px 25px;" onclick="this.parentElement.parentElement.remove()">わかった！</button>';
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        };
+</script>
+
+
 
     <!-- Image Data Injection -->
     <script>
