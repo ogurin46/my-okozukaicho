@@ -263,6 +263,78 @@
             z-index: 1;
         }
 
+        /* メダル拡大表示用のスタイル */
+        .medal-detail-modal {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 40px;
+            text-align: center;
+            max-width: 90%;
+            width: 340px;
+            border: 10px solid #ffd700;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            position: relative;
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .medal-large {
+            font-size: 6rem;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3), inset 0 -5px 10px rgba(0,0,0,0.2);
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+        .medal-large::before {
+            content: attr(data-icon);
+            z-index: 1;
+        }
+
+        /* キランと光る閃光 */
+        .medal-glint {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(
+                135deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0) 45%,
+                rgba(255,255,255,0.9) 50%,
+                rgba(255,255,255,0) 55%,
+                rgba(255,255,255,0) 100%
+            );
+            background-size: 300% 300%;
+            animation: glintEffect 2s infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+        @keyframes glintEffect {
+            0% { background-position: 100% 100%; }
+            20% { background-position: 0% 0%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .medal-sparkle {
+            position: absolute;
+            font-size: 2rem;
+            animation: sparklePulse 1s infinite alternate;
+            z-index: 3;
+        }
+        @keyframes sparklePulse {
+            from { transform: scale(0.8) rotate(0deg); opacity: 0.5; }
+            to { transform: scale(1.2) rotate(20deg); opacity: 1; }
+        }
+
         .reset-container {
             margin-top: 50px;
             margin-bottom: 50px;
@@ -385,6 +457,51 @@
         .btn-check-rate:hover {
             background: #ffe4e1;
         }
+        /* 丸型ルーレットホイールスタイル - ゴージャス版 */
+        .wheel-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px auto;
+            padding: 10px;
+            background: radial-gradient(circle, #fff 60%, #fff0f5 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 192, 203, 0.5);
+        }
+        .wheel-pointer-top {
+            font-size: 2rem;
+            color: #ff1493;
+            line-height: 1;
+            margin-bottom: -5px;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            animation: pointerBounce 0.5s infinite alternate;
+        }
+        @keyframes pointerBounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+        #roulette-canvas-1, #roulette-canvas-2 {
+            border-radius: 50%;
+            box-shadow: 
+                0 0 0 5px #ffd700, 
+                0 0 0 10px #ff69b4,
+                0 10px 30px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: block;
+            background-color: #fff;
+        }
+        /* キラキラ・エフェクト */
+        .glitter-overlay {
+            position: absolute;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 15;
+        }
 </style>
 </head>
 <body>
@@ -422,11 +539,7 @@
                 <div class="bank-row bank-total"><span>いまの合計:</span><span id="bank-1">0</span>円</div>
                 <div class="profit-text" id="profit-1">＋0円 おトク！</div>
             </div>
-            <div class="roulette-container" id="roulette-section-1">
-                <div class="bank-label">🎰 こんげつの金利ルーレット</div>
-                <div class="roulette-display" id="roulette-result-1">まだ回してないよ！</div>
-                <button class="btn-roulette" id="btn-spin-1" onclick="startRoulette(1)">ルーレットをまわす！</button>
-            </div>
+
 
 
             <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -442,12 +555,22 @@
                 <button class="btn-save" onclick="handleDeposit(1)">あずける</button>
                 <button class="btn-out" onclick="handleWithdraw(1)">だす</button>
             </div>
-            <div class="history" id="history-1">はじまり！</div>
+            
 
             <div class="medal-collection">
-                <div class="medal-title">🏅 獲得したメダル</div>
+                <div class="medal-title">🏅 かくとくしたメダル</div>
                 <div class="medal-group" id="medals-1"></div>
             </div>
+            <div class="roulette-container" id="roulette-section-1">
+                <div class="bank-label">🎰 きんりルーレット</div>
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer-top">▼</div>
+                    <canvas id="roulette-canvas-1" width="180" height="180" onclick="startRoulette(1)"></canvas>
+                </div>
+                <div class="roulette-display" id="roulette-result-1">まだ回してないよ！</div>
+                <button class="btn-roulette" id="btn-spin-1" onclick="startRoulette(1)">ルーレットをまわす！</button>
+            </div>
+            <div class="history" id="history-1">はじまり！</div>
         </div>
 
         <!-- 4歳の子（いすずちゃん） -->
@@ -474,11 +597,7 @@
                 <div class="bank-row bank-total"><span>いまの合計:</span><span id="bank-2">0</span>円</div>
                 <div class="profit-text" id="profit-2">＋0円 おトク！</div>
             </div>
-            <div class="roulette-container" id="roulette-section-2">
-                <div class="bank-label">🎰 こんげつの金利ルーレット</div>
-                <div class="roulette-display" id="roulette-result-2">まだ回してないよ！</div>
-                <button class="btn-roulette" id="btn-spin-2" onclick="startRoulette(2)">ルーレットをまわす！</button>
-            </div>
+
 
 
             <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -494,12 +613,22 @@
                 <button class="btn-save" onclick="handleDeposit(2)">あずける</button>
                 <button class="btn-out" onclick="handleWithdraw(2)">だす</button>
             </div>
-            <div class="history" id="history-2">はじまり！</div>
+            
 
             <div class="medal-collection">
-                <div class="medal-title">🏅 獲得したメダル</div>
+                <div class="medal-title">🏅 かくとくしたメダル</div>
                 <div class="medal-group" id="medals-2"></div>
             </div>
+            <div class="roulette-container" id="roulette-section-2">
+                <div class="bank-label">🎰 きんりルーレット</div>
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer-top">▼</div>
+                    <canvas id="roulette-canvas-2" width="180" height="180" onclick="startRoulette(2)"></canvas>
+                </div>
+                <div class="roulette-display" id="roulette-result-2">まだ回してないよ！</div>
+                <button class="btn-roulette" id="btn-spin-2" onclick="startRoulette(2)">ルーレットをまわす！</button>
+            </div>
+            <div class="history" id="history-2">はじまり！</div>
         </div>
     </div>
 
@@ -732,6 +861,7 @@
                 el.className = 'medal m-total'; 
                 el.setAttribute('data-icon', '💙');
                 el.title = `ぜんぶで${m}円`;
+                el.onclick = () => showMedalDetails(`ぜんぶで ${m}円`, '💙', 'm-total');
                 container.appendChild(el);
             });
             state[id].earnedMedals.dep.forEach(m => {
@@ -739,6 +869,7 @@
                 el.className = 'medal m-dep';
                 el.setAttribute('data-icon', '💜');
                 el.title = `あずけた合計${m}円`;
+                el.onclick = () => showMedalDetails(`あずけた合計 ${m}円`, '💜', 'm-dep');
                 container.appendChild(el);
             });
             state[id].earnedMedals.spent.forEach(m => {
@@ -746,9 +877,33 @@
                 el.className = 'medal m-spent';
                 el.setAttribute('data-icon', '🩷');
                 el.title = `つかった合計${m}円`;
+                el.onclick = () => showMedalDetails(`つかった合計 ${m}円`, '🩷', 'm-spent');
                 container.appendChild(el);
             });
         }
+
+        window.showMedalDetails = function(title, icon, typeClass) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+            
+            const modal = document.createElement('div');
+            modal.className = 'medal-detail-modal';
+            
+            modal.innerHTML = `
+                <div class="medal-large ${typeClass}" data-icon="${icon}">
+                    <div class="medal-glint"></div>
+                </div>
+                <div class="medal-sparkle" style="top: 20px; left: 30px;">✨</div>
+                <div class="medal-sparkle" style="bottom: 80px; right: 30px;">🌟</div>
+                <h3 style="color: #555; margin-bottom: 10px; font-size: 1.4rem;">${title}</h3>
+                <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">メダルを かくとくしたよ！</p>
+                <button class="btn-get" style="padding: 10px 40px;" onclick="this.parentElement.parentElement.remove()">とじる</button>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        };
 
         window.handleAddMoney = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
@@ -853,68 +1008,177 @@
             setTimeout(() => floatImg.remove(), 2500);
         }
 
+        const WHEEL_SEGMENTS = [
+            { rate: 10,  span: 180,  color: '#ffb6c1', label: '10%', grad: ['#ffb6c1', '#ff85a1'] },
+            { rate: 20,  span: 108,  color: '#ffd700', label: '20%', grad: ['#ffd700', '#daa520'] },
+            { rate: 50,  span: 54,   color: '#ffa500', label: '50%', grad: ['#ffa500', '#ff4500'] },
+            { rate: 100, span: 14.4, color: '#ff69b4', label: '100%', grad: ['#ff69b4', '#c71585'] },
+            { rate: 0,   span: 3.6,  color: '#cccccc', label: '0%', grad: ['#cccccc', '#888888'] },
+        ];
+        const wheelRotations = { 1: 0, 2: 0 };
+
+        function drawWheel(id, rotDeg) {
+            const canvas = document.getElementById('roulette-canvas-' + id);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2, cy = canvas.height / 2;
+            const r = cx - 15; // 電飾用のスペースを空ける
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 外枠（ゴールドフレーム）
+            ctx.beginPath();
+            ctx.arc(cx, cy, cx - 2, 0, Math.PI * 2);
+            const goldGrad = ctx.createRadialGradient(cx, cy, r, cx, cy, cx);
+            goldGrad.addColorStop(0, '#d4af37');
+            goldGrad.addColorStop(0.5, '#ffd700');
+            goldGrad.addColorStop(1, '#b8860b');
+            ctx.fillStyle = goldGrad;
+            ctx.fill();
+            
+            // 電飾（キラキラ動く点）
+            const bulbCount = 16;
+            const bulbTime = Date.now() / 150;
+            for (let i = 0; i < bulbCount; i++) {
+                const angle = (i * (360 / bulbCount)) * Math.PI / 180;
+                const bx = cx + (cx - 8) * Math.cos(angle);
+                const by = cy + (cx - 8) * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+                const isOn = Math.floor(bulbTime + i) % 2 === 0;
+                ctx.fillStyle = isOn ? '#fff' : '#aa8800';
+                if (isOn) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#fff';
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            let startDeg = rotDeg - 90;
+            WHEEL_SEGMENTS.forEach(seg => {
+                const s = startDeg * Math.PI / 180;
+                const e = (startDeg + seg.span) * Math.PI / 180;
+                
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, s, e);
+                ctx.closePath();
+                
+                // セグメントのグラデーション
+                const segGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                segGrad.addColorStop(0.3, seg.grad[0]);
+                segGrad.addColorStop(1, seg.grad[1]);
+                ctx.fillStyle = segGrad;
+                ctx.fill();
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.stroke();
+                
+                // ラベル描画
+                if (seg.span >= 10) {
+                    const mid = (s + e) / 2;
+                    const lx = cx + r * 0.65 * Math.cos(mid);
+                    const ly = cy + r * 0.65 * Math.sin(mid);
+                    ctx.save(); ctx.translate(lx, ly); ctx.rotate(mid + Math.PI / 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.shadowBlur = 4; ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.font = 'bold ' + (seg.span > 30 ? 15 : 12) + 'px sans-serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(seg.label, 0, 0); ctx.restore();
+                }
+                startDeg += seg.span;
+            });
+            
+            // センターピン
+            ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff'; ctx.fill();
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4; ctx.stroke();
+            
+            ctx.fillStyle = '#ff1493'; ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('GO!', cx, cy);
+
+            // 全体への光沢
+            const shine = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            shine.addColorStop(0, 'rgba(255,255,255,0.4)');
+            shine.addColorStop(0.4, 'rgba(255,255,255,0)');
+            shine.addColorStop(1, 'rgba(255,255,255,0.1)');
+            ctx.fillStyle = shine;
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+        }
+
         window.startRoulette = function(id) {
             const y = parseInt(document.getElementById('current-year').value);
             const mon = parseInt(document.getElementById('current-month').value);
-            const key = `${y}-${mon}`;
-            
+            const key = y + '-' + mon;
             if (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) {
-                alert('今月はもう回したよ！');
-                return;
+                alert('今月はもう回したよ！'); return;
             }
-
-            const overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            const modal = document.createElement('div');
-            modal.className = 'roulette-modal';
-            modal.innerHTML = `
-                <h2 style="color: #ff69b4;">✨ きんりルーレット ✨</h2>
-                <div class="roulette-display spinning" id="modal-spin-text">??? %</div>
-                <p>何％になるかな...？</p>
-            `;
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-
-            let count = 0;
-            const rates = [10, 20, 50, 100, 0];
-            const interval = setInterval(() => {
-                document.getElementById('modal-spin-text').textContent = rates[Math.floor(Math.random() * rates.length)] + ' %';
-                count++;
-                if (count > 20) {
-                    clearInterval(interval);
-                    finishRoulette(id, key, overlay);
+            const spinBtn = document.getElementById('btn-spin-' + id);
+            if (spinBtn) {
+                spinBtn.disabled = true;
+                spinBtn.textContent = 'まわしているよ...';
+            }
+            
+            const rand = Math.random() * 100;
+            let result, segStart, segSpan;
+            if (rand < 50)      { result = 10;  segStart = 0;     segSpan = 180;  }
+            else if (rand < 80) { result = 20;  segStart = 180;   segSpan = 108;  }
+            else if (rand < 95) { result = 50;  segStart = 288;   segSpan = 54;   }
+            else if (rand < 99) { result = 100; segStart = 342;   segSpan = 14.4; }
+            else                { result = 0;   segStart = 356.4; segSpan = 3.6;  }
+            
+            const targetInSeg = segStart + segSpan * (0.2 + Math.random() * 0.6);
+            const finalOffset = (360 - targetInSeg % 360) % 360;
+            const totalRotation = 360 * (10 + Math.floor(Math.random() * 5)) + finalOffset;
+            const startRot = wheelRotations[id];
+            const startTime = performance.now();
+            const duration = 4000 + Math.random() * 1000;
+            
+            function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+            
+            function animate(now) {
+                const t = Math.min((now - startTime) / duration, 1);
+                const rot = startRot + totalRotation * easeOutCubic(t);
+                wheelRotations[id] = rot;
+                drawWheel(id, rot % 360);
+                
+                // 回転中のキラキラパーティクル（時々出す）
+                if (Math.random() < 0.3) {
+                    createSpinSparkle(id);
                 }
-            }, 100);
+                
+                if (t < 1) { 
+                    requestAnimationFrame(animate); 
+                } else { 
+                    finishRouletteCanvas(id, key, result); 
+                }
+            }
+            requestAnimationFrame(animate);
         }
 
-        function finishRoulette(id, key, overlay) {
-            const rand = Math.random() * 100;
-            let result = 10;
-            if (rand < 50) result = 10;
-            else if (rand < 80) result = 20;
-            else if (rand < 95) result = 50;
-            else if (rand < 99) result = 100;
-            else result = 0;
+        function createSpinSparkle(id) {
+            const canvas = document.getElementById('roulette-canvas-' + id);
+            const rect = canvas.getBoundingClientRect();
+            const s = document.createElement('div');
+            s.className = 'sparkle show-sparkle';
+            s.textContent = ['✨','🌟','💎','💖'][Math.floor(Math.random()*4)];
+            s.style.position = 'fixed';
+            s.style.left = (rect.left + rect.width / 2) + 'px';
+            s.style.top = (rect.top + rect.height / 2) + 'px';
+            s.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+            s.style.setProperty('--ty', (Math.random() - 0.5) * 200 + 'px');
+            s.style.zIndex = '10000';
+            document.body.appendChild(s);
+            setTimeout(() => s.remove(), 1000);
+        }
 
+        function finishRouletteCanvas(id, key, result) {
             if (!state.interestRates) state.interestRates = {};
             if (!state.interestRates[key]) state.interestRates[key] = {};
             state.interestRates[key][id] = result;
-
-            document.getElementById('modal-spin-text').className = 'roulette-display';
-            document.getElementById('modal-spin-text').style.fontSize = '3rem';
-            document.getElementById('modal-spin-text').textContent = result + ' %';
-            
-            const btn = document.createElement('button');
-            btn.className = 'btn-get';
-            btn.style.marginTop = '20px';
-            btn.textContent = 'やったー！';
-            btn.onclick = () => {
-                overlay.remove();
-                celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
-                updateDisplay(id);
-            };
-            overlay.firstChild.appendChild(btn);
+            celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
             saveState();
+            updateDisplay(id);
         }
 
         // Initialize
@@ -930,6 +1194,9 @@
         } else {
             await saveState();
         }
+        // 丸型ルーレット初期描画
+        drawWheel(1, 0);
+        drawWheel(2, 0);
     
         window.showRatePopup = function(id) {
             const y = parseInt(document.getElementById('current-year').value);
@@ -937,9 +1204,10 @@
             const key = y + '-' + mon;
             
             let rateText = "まだ決まっていないよ！";
-            
+            let subText = "(ルーレットをまわしてね)";
             if (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) {
                 rateText = "+" + state.interestRates[key][id] + " % だよ！";
+                subText = "(まほうの力でお金が増えるよ！)";
             }
             
             const overlay = document.createElement('div');
@@ -948,18 +1216,30 @@
             
             const modal = document.createElement('div');
             modal.className = 'roulette-modal';
-            modal.style.borderColor = (id === 1 ? '#ffb6c1' : '#add8e6');
-            modal.innerHTML = '<h3 style="color: ' + (id === 1 ? '#ff69b4' : '#1e90ff') + '; font-size: 1.1rem; margin-bottom: 15px;">' +
-                    '✨ ' + y + 'ねん ' + mon + 'がつ の きんり ✨' +
-                '</h3>' +
-                '<div style="font-size: 1.8rem; font-weight: bold; color: #333; margin: 20px 0;">' +
-                    rateText +
-                '</div>' +
-                '<p style="font-size: 0.8rem; color: #888;">(ルーレットで決まった数字だよ)</p>' +
-                '<button class="btn-get" style="margin-top: 20px; padding: 8px 25px;" onclick="this.parentElement.parentElement.remove()">わかった！</button>';
+            modal.style.background = 'linear-gradient(135deg, #fff 0%, #fff0f5 100%)';
+            modal.style.border = '10px solid #ffd700';
+            modal.style.boxShadow = '0 20px 60px rgba(0,0,0,0.4), inset 0 0 20px rgba(255,255,255,0.5)';
+            
+            modal.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 10px;">🎰</div>
+                <h3 style="color: ${id === 1 ? '#ff69b4' : '#1e90ff'}; font-size: 1.2rem; margin-bottom: 5px; text-shadow: 1px 1px 0 #fff;">
+                    ✨ ${y}ねん ${mon}がつ の きんり ✨
+                </h3>
+                <div style="font-size: 2.2rem; font-weight: bold; color: #333; margin: 15px 0; background: rgba(255,255,255,0.6); padding: 10px; border-radius: 15px; border: 2px dashed #ffb6c1;">
+                    ${rateText}
+                </div>
+                <p style="font-size: 0.9rem; color: #ff1493; font-weight: bold;">${subText}</p>
+                <button class="btn-get" style="margin-top: 25px; padding: 12px 40px; font-size: 1.2rem; box-shadow: 0 6px 0 #cc8400;" 
+                        onclick="this.parentElement.parentElement.remove()">やったー！</button>
+            `;
             
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
+            
+            // ポップアップ時にも少しキラキラさせる
+            for(let i=0; i<15; i++) {
+                setTimeout(() => createSpinSparkle(id), i * 100);
+            }
         };
 </script>
 
