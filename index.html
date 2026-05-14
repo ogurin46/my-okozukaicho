@@ -504,6 +504,61 @@
             left: 0;
             z-index: 15;
         }
+
+        /* 吹き出しのスタイル (モーダル用) */
+        .character-speak-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 40px;
+            text-align: center;
+            max-width: 90%;
+            width: 320px;
+            border: 8px solid #fff0f5;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .modal-char-img {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            animation: charWobble 2s infinite ease-in-out;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+        }
+        @keyframes charWobble {
+            0%, 100% { transform: rotate(-3deg) scale(1); }
+            50% { transform: rotate(3deg) scale(1.08); }
+        }
+        .modal-speech-bubble {
+            background: #fffafa;
+            border: 3px solid #ffb6c1;
+            border-radius: 20px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #555;
+            position: relative;
+            line-height: 1.6;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .modal-speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 12px;
+            border-style: solid;
+            border-color: transparent transparent #ffb6c1 transparent;
+        }
+        .child-card.cinna-theme .modal-speech-bubble {
+            border-color: #add8e6;
+            background: #f0f8ff;
+        }
+        .child-card.cinna-theme .modal-speech-bubble::before {
+            border-color: transparent transparent #add8e6 transparent;
+        }
 </style>
 </head>
 <body>
@@ -521,7 +576,7 @@
         <div class="child-card kiki-lala" id="card-1">
             <h2 style="text-align: center; color: var(--kiki-lala-main); margin: 0 0 10px 0;">しのちゃん</h2>
             <div class="char-img-container">
-                <img src="monster1.png" class="char-img" id="img-1" alt="キキララ">
+                <img src="monster1.png" class="char-img" id="img-1" alt="キキララ" onclick="speak(1)">
                 <div id="sparkles-1"></div>
             </div>
             
@@ -579,7 +634,7 @@
         <div class="child-card cinna" id="card-2">
             <h2 style="text-align: center; color: var(--cinna-main); margin: 0 0 10px 0;">いすずちゃん</h2>
             <div class="char-img-container">
-                <img src="monster3.png" class="char-img" id="img-2" alt="シナモン">
+                <img src="monster3.png" class="char-img" id="img-2" alt="シナモン" onclick="speak(2)">
                 <div id="sparkles-2"></div>
             </div>
             
@@ -905,6 +960,89 @@
             
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
+        };
+
+        const MESSAGES = {
+            1: [
+                "しのちゃん、すごいね！おかねが たまってきたよ！✨",
+                "しのちゃん、こんど なにを かうのかな？たのしみだね！🍎",
+                "しのちゃん、まほうのぎんこうに あずけると どんどん ふえるよ！🌟",
+                "しのちゃん、きょうも がんばったね！えらいよ！💖",
+                "しのちゃん、おかいものも たのしいけど、ためるのも だいじだね！💎",
+                "しのちゃん、おかねの つかいかた、とっても じょうずだね！🌈",
+                "しのちゃん、１ねんせいになって どんどん かっこよくなったね！💪",
+                "しのちゃん、あしたは なにするのかな？わくわくするね！🎈",
+                "しのちゃん、メダルがいっぱい！ぜんぶ あつめられるかな？🏅",
+                "しのちゃん、ルーレットで おトクになったね！やったー！🎰",
+                "しのちゃん、おかねを だいじにすると、いいことが あるよ！🍀",
+                "しのちゃん、いっしょに おこづかいちょう、がんばろうね！📘",
+                "しのちゃん、おてつだいを して おかねを もらったの？えらい！👏",
+                "しのちゃん、がまんして ためるのも、すごい 力（ちから）だよ！🔥",
+                "しのちゃん、こまったことが あったら、いつでも おしえてね！🤝",
+                "しのちゃん、きらきらした えがおが、いちばん すてきだよ！😊",
+                "しのちゃん、おかねは 魔法（まほう）みたいだね！大切（たいせつ）にね！🪄",
+                "しのちゃん、じぶんで おかねを かんりするなんて、もう 大人（おとな）だね！✨",
+                "しのちゃん、夢（ゆめ）に むかって、こつこつ ためていこう！🚀",
+                "しのちゃん、いつも ありがとう！だいすきだよ！💕",
+                "しのちゃん、きょうの ルーレットは どうだった？また あしたも まわそう！🎡",
+                "しのちゃん、あずけた おかねが どんどん ふえていくの、たのしいね！📈",
+                "しのちゃん、おかいものする ときは、よく かんがえて えらぼうね！🛍️",
+                "しのちゃん、こんど どこか おでかけ するのかな？たのしみ！🚗",
+                "しのちゃん、これからも いっしょに おかねの お勉強（べんきょう）しようね！🎓",
+                "しのちゃん、目標（もくひょう）まで あとすこしかな？応援（おうえん）してるよ！🏁"
+            ],
+            2: [
+                "いすずちゃん、だいすき！いっしょに あそぼう！☁️",
+                "いすずちゃん、おかねが きらきら してるね！きれーい！✨",
+                "いすずちゃん、おかいものに いけるかな？わくわく！🍓",
+                "いすずちゃん、えらいねー！にこにこ だよ！😊",
+                "いすずちゃん、メダルが いっぱい！うれしいねー！🏅",
+                "いすずちゃん、きょうも おてつだい したの？すごいすごい！🙌",
+                "いすずちゃん、にこにこ えがおが いちばん かわいいよ！💖",
+                "いすずちゃん、おほしさま みたいに きらきら だね！🌟",
+                "いすずちゃん、ルーレット ぐるぐるー！なにが でるかな？🎡",
+                "いすずちゃん、おかね ぽいって しないで、だいじにしようね！🍬",
+                "いすずちゃん、おなかすいた？いっしょに おやつ たべる？🍪",
+                "いすずちゃん、いっしょに おうた うたおう！ららら〜♪🎶",
+                "いすずちゃん、ぎゅーって していい？だいすきだよ！🤗",
+                "いすずちゃん、おかいもので なにを かうのかな？おかし？🍭",
+                "いすずちゃん、たーくさん ためて、おっきな おもちゃ かおうね！🧸",
+                "いすずちゃん、きょうも げんき いっぱい！うれしいな！☀️",
+                "いすずちゃん、ふわふわの くもに のって あそぼう！☁️",
+                "いすずちゃん、きらきらの おかね、たからもの だね！💎",
+                "いすずちゃん、よく がんばりました！はなまる あげるね！💮",
+                "いすずちゃん、あしたも いっしょに あそぼうね！またね！👋",
+                "いすずちゃん、おかねが ふえると、もっと きらきら するよ！✨",
+                "いすずちゃん、おねえちゃんと いっしょに がんばろうね！👭",
+                "いすずちゃん、プリン たべたいなー！🍮",
+                "いすずちゃん、まほうの ぎんこうは、まほうで おかねが ふえるんだよ！🪄",
+                "いすずちゃん、いつも ニコニコ してて、とっても えらいね！💕",
+                "いすずちゃん、よしよし！いっそうに おかねもちに なっちゃおう！💰"
+            ]
+        };
+
+        window.speak = function(id) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+            
+            const modal = document.createElement('div');
+            modal.className = `character-speak-modal ${id === 2 ? 'cinna-theme' : ''}`;
+            
+            const msg = MESSAGES[id][Math.floor(Math.random() * MESSAGES[id].length)];
+            const imgUrl = id === 1 ? 'monster1.png' : 'monster3.png';
+            
+            modal.innerHTML = `
+                <img src="${imgUrl}" class="modal-char-img">
+                <div class="modal-speech-bubble">${msg}</div>
+                <button class="btn-get" style="margin-top: 25px; padding: 10px 40px; border-radius: 25px;" onclick="this.parentElement.parentElement.remove()">ありがとう！</button>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // 中央からキラキラを出す
+            createSpinSparkle(window.innerWidth / 2, window.innerHeight / 2);
         };
 
         window.handleAddMoney = function(id) {
