@@ -522,9 +522,13 @@
             width: 160px;
             height: 160px;
             object-fit: contain;
-            margin-bottom: 15px;
+            margin: 0 auto 15px auto;
+            display: block;
+            -webkit-animation: charWobble 2s infinite ease-in-out;
             animation: charWobble 2s infinite ease-in-out;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+            /* iOS Safariで画像が消える原因になることがあるためfilterを微調整 */
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+            -webkit-filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
         }
         @keyframes charWobble {
             0%, 100% { transform: rotate(-3deg) scale(1); }
@@ -1030,10 +1034,12 @@
             modal.className = `character-speak-modal ${id === 2 ? 'cinna-theme' : ''}`;
             
             const msg = MESSAGES[id][Math.floor(Math.random() * MESSAGES[id].length)];
-            const imgUrl = id === 1 ? 'monster1.png' : 'monster3.png';
+            // カードに表示されている既存の画像URLを直接取得する（パスの問題を回避）
+            const sourceImg = document.getElementById(`img-${id}`);
+            const imgUrl = sourceImg ? sourceImg.src : (id === 1 ? 'monster1.png' : 'monster3.png');
             
             modal.innerHTML = `
-                <img src="${imgUrl}" class="modal-char-img">
+                <img src="${imgUrl}" class="modal-char-img" alt="character">
                 <div class="modal-speech-bubble">${msg}</div>
                 <button class="btn-get" style="margin-top: 25px; padding: 10px 40px; border-radius: 25px;" onclick="this.parentElement.parentElement.remove()">ありがとう！</button>
             `;
