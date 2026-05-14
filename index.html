@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>キラキラ・おこづかいちょう</title>
+    <title>キラキラおこづかいちょう</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#fff0f5">
@@ -33,9 +33,11 @@
 
         h1 {
             color: #555;
-            font-size: 1.8rem;
+            font-size: clamp(1.2rem, 7vw, 1.8rem);
             margin-bottom: 20px;
             text-shadow: 2px 2px 0px #fff;
+            text-align: center;
+            white-space: nowrap;
         }
 
         .date-setter {
@@ -354,7 +356,7 @@
         .btn-reset:hover { color: #f44336; border-color: #f44336; background: #fff5f5; }
         /* スマホ向け調整 */
         @media (max-width: 480px) {
-            h1 { font-size: 1.5rem; }
+            h1 { font-size: clamp(1.1rem, 6.5vw, 1.4rem); }
             .date-setter { padding: 10px 15px; font-size: 0.9rem; flex-wrap: wrap; justify-content: center; }
             .child-card { padding: 15px; }
             .char-img { width: 120px; height: 120px; }
@@ -506,7 +508,7 @@
 </head>
 <body>
 
-    <h1>✨ キラキラ・おこづかいちょう ✨</h1>
+    <h1>✨ キラキラおこづかいちょう ✨</h1>
 
     <div class="date-setter">
         <span>🗓️ きょうは：</span>
