@@ -188,6 +188,15 @@
             background: rgba(255,255,255,0.5);
             padding: 8px;
             border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .history:hover {
+            background: rgba(255,255,255,0.8);
+            transform: scale(1.02);
+        }
+        .history:active {
+            transform: scale(0.98);
         }
 
         /* メダルセクション */
@@ -631,7 +640,7 @@
                 <div class="roulette-display" id="roulette-result-1">まだ回してないよ！</div>
                 <button class="btn-roulette" id="btn-spin-1" onclick="startRoulette(1)">ルーレットをまわす！</button>
             </div>
-            <div class="history" id="history-1">はじまり！</div>
+            <div class="history" id="history-1" onclick="showFullHistory(1)" title="これまでの履歴をみる">はじまり！</div>
         </div>
 
         <!-- 4歳の子（いすずちゃん） -->
@@ -689,7 +698,7 @@
                 <div class="roulette-display" id="roulette-result-2">まだ回してないよ！</div>
                 <button class="btn-roulette" id="btn-spin-2" onclick="startRoulette(2)">ルーレットをまわす！</button>
             </div>
-            <div class="history" id="history-2">はじまり！</div>
+            <div class="history" id="history-2" onclick="showFullHistory(2)" title="これまでの履歴をみる">はじまり！</div>
         </div>
     </div>
 
@@ -1370,6 +1379,51 @@
         drawWheel(1, 0);
         drawWheel(2, 0);
     
+        window.showFullHistory = function(id) {
+            const list = state[id].history || [];
+            const reversedList = [...list].reverse();
+            let historyHtml = "";
+            if (reversedList.length === 0) {
+                historyHtml = "<div style='color: #888; text-align: center; padding: 20px 0;'>まだ履歴はないよ！</div>";
+            } else {
+                historyHtml = `<div style="max-height: 300px; overflow-y: auto; text-align: left; padding: 5px; font-size: 0.95rem; line-height: 1.6;">`;
+                reversedList.forEach((item, index) => {
+                    historyHtml += `<div style="padding: 6px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center;">
+                        <span style="color: #bbb; margin-right: 10px; font-size: 0.8rem;">#${reversedList.length - index}</span>
+                        <span>${item}</span>
+                    </div>`;
+                });
+                historyHtml += `</div>`;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+
+            const modal = document.createElement('div');
+            modal.className = 'roulette-modal';
+            modal.style.background = 'linear-gradient(135deg, #fff 0%, #f0f8ff 100%)';
+            if (id === 1) {
+                modal.style.border = '8px solid #ffb6c1';
+            } else {
+                modal.style.border = '8px solid #b0c4de';
+            }
+            modal.style.boxShadow = '0 20px 60px rgba(0,0,0,0.3)';
+
+            modal.innerHTML = `
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">📜</div>
+                <h3 style="color: ${id === 1 ? '#ff69b4' : '#1e90ff'}; font-size: 1.3rem; margin-bottom: 15px; text-shadow: 1px 1px 0 #fff;">
+                    ${id === 1 ? 'しのちゃん' : 'いすずちゃん'} の れきし
+                </h3>
+                ${historyHtml}
+                <button class="btn-get" style="margin-top: 20px; padding: 10px 40px; font-size: 1.1rem; border-radius: 20px;" 
+                        onclick="this.parentElement.parentElement.remove()">とじる</button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        };
+
         window.showRatePopup = function(id) {
             const y = parseInt(document.getElementById('current-year').value);
             const mon = parseInt(document.getElementById('current-month').value);
