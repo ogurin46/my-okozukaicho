@@ -716,18 +716,68 @@
         const stateDoc = doc(db, "okozukaicho", "global_state");
 
         let state = {
-            1: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
-            2: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+            1: { cash: 0, deposits: [], principal: 0, bank: 0, history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+            2: { cash: 0, deposits: [], principal: 0, bank: 0, history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
             currentDate: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
             interestRates: {}
         };
 
         let isInitialLoad = true;
 
+        function calculateLegacyBankForMigration(tempState, id) {
+            const elYear = document.getElementById('current-year');
+            const elMonth = document.getElementById('current-month');
+            const curY = elYear ? parseInt(elYear.value) : (tempState.currentDate ? tempState.currentDate.year : new Date().getFullYear());
+            const curM = elMonth ? parseInt(elMonth.value) : (tempState.currentDate ? tempState.currentDate.month : (new Date().getMonth() + 1));
+            const curTotalMonths = curY * 12 + curM;
+
+            let principal = 0;
+            let total = 0;
+            if (tempState[id] && tempState[id].deposits) {
+                tempState[id].deposits.forEach(d => {
+                    principal += d.amount;
+                    const depTotalMonths = d.year * 12 + d.month;
+                    
+                    let currentVal = d.amount;
+                    for (let m = depTotalMonths; m < curTotalMonths; m++) {
+                        const y = Math.floor(m / 12);
+                        const mon = (m % 12) + 1;
+                        const key = `${y}-${mon}`;
+                        const rate = (tempState.interestRates && tempState.interestRates[key] && tempState.interestRates[key][id] !== undefined) 
+                                    ? tempState.interestRates[key][id] 
+                                    : 10;
+                        currentVal = currentVal * (1 + rate / 100);
+                    }
+                    const roundedVal = Math.round(currentVal / 10) * 10;
+                    total += roundedVal;
+                });
+            }
+            return { principal, total };
+        }
+
+        function migrateState(loadedState) {
+            [1, 2].forEach(id => {
+                if (loadedState[id]) {
+                    if (loadedState[id].bank === undefined || loadedState[id].principal === undefined) {
+                        let p = 0;
+                        let b = 0;
+                        if (loadedState[id].deposits && Array.isArray(loadedState[id].deposits) && loadedState[id].deposits.length > 0) {
+                            const res = calculateLegacyBankForMigration(loadedState, id);
+                            p = res.principal;
+                            b = res.total;
+                        }
+                        loadedState[id].principal = p;
+                        loadedState[id].bank = b;
+                    }
+                }
+            });
+            return loadedState;
+        }
+
         // Firebaseからのリアルタイム同期
         onSnapshot(stateDoc, (snapshot) => {
             if (snapshot.exists()) {
-                state = snapshot.data();
+                state = migrateState(snapshot.data());
                 if (isInitialLoad) {
                     document.getElementById('current-year').value = state.currentDate.year;
                     document.getElementById('current-month').value = state.currentDate.month;
@@ -750,8 +800,8 @@
         window.resetAll = async function() {
             if(confirm('すべてのおかねとメダルのデータをけして、さいしょからにしますか？ (クラウドのデータもきえます)')) {
                 state = {
-                    1: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
-                    2: { cash: 0, deposits: [], history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+                    1: { cash: 0, deposits: [], principal: 0, bank: 0, history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
+                    2: { cash: 0, deposits: [], principal: 0, bank: 0, history: [], totalSpent: 0, totalDepEver: 0, maxAssets: 0, earnedMedals: { total: [], spent: [], dep: [] } },
                     currentDate: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 },
                     interestRates: {}
                 };
@@ -808,30 +858,10 @@
         }
 
         function calculateBank(id) {
-            const curY = parseInt(document.getElementById('current-year').value);
-            const curM = parseInt(document.getElementById('current-month').value);
-            const curTotalMonths = curY * 12 + curM;
-
-            let principal = 0;
-            let total = 0;
-            state[id].deposits.forEach(d => {
-                principal += d.amount;
-                const depTotalMonths = d.year * 12 + d.month;
-                
-                let currentVal = d.amount;
-                for (let m = depTotalMonths; m < curTotalMonths; m++) {
-                    const y = Math.floor(m / 12);
-                    const mon = (m % 12) + 1;
-                    const key = `${y}-${mon}`;
-                    const rate = (state.interestRates && state.interestRates[key] && state.interestRates[key][id] !== undefined) 
-                                ? state.interestRates[key][id] 
-                                : 10;
-                    currentVal = currentVal * (1 + rate / 100);
-                }
-                const roundedVal = Math.round(currentVal / 10) * 10;
-                total += roundedVal;
-            });
-            return { principal, total };
+            return {
+                principal: state[id].principal || 0,
+                total: state[id].bank || 0
+            };
         }
 
         window.syncAll = function() {
@@ -1078,7 +1108,8 @@
             if (state[id].cash >= amount) {
                 state[id].cash -= amount;
                 state[id].totalDepEver += amount;
-                state[id].deposits.push({ amount, year, month });
+                state[id].bank = (state[id].bank || 0) + amount;
+                state[id].principal = (state[id].principal || 0) + amount;
                 state[id].history.push(`${year}/${month}に ${amount}円 あずけた！`);
                 celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
                 updateDisplay(id);
@@ -1089,39 +1120,24 @@
 
         window.handleWithdraw = function(id) {
             const amount = parseInt(document.getElementById(`input-${id}`).value);
-            const res = calculateBank(id);
-            const curY = parseInt(document.getElementById('current-year').value);
-            const curM = parseInt(document.getElementById('current-month').value);
-            const curTotalMonths = curY * 12 + curM;
+            const bankTotal = state[id].bank || 0;
 
             if (amount === 0) {
-                if (res.total > 0) {
-                    state[id].cash += res.total;
-                    state[id].deposits = [];
+                if (bankTotal > 0) {
+                    state[id].cash += bankTotal;
+                    state[id].bank = 0;
+                    state[id].principal = 0;
                     state[id].history.push(`ぎんこうから ぜんぶだした！`);
                     updateDisplay(id);
                 }
                 return;
             }
 
-            if (res.total >= amount) {
-                let remaining = amount;
-                for (let i = 0; i < state[id].deposits.length; i++) {
-                    let d = state[id].deposits[i];
-                    const depTotalMonths = d.year * 12 + d.month;
-                    const diff = Math.max(0, curTotalMonths - depTotalMonths);
-                    const currentV = Math.round((d.amount * Math.pow(1.1, diff)) / 10) * 10;
-
-                    if (currentV > remaining) {
-                        const newV = currentV - remaining;
-                        d.amount = newV / Math.pow(1.1, diff);
-                        remaining = 0;
-                        break;
-                    } else {
-                        remaining -= currentV;
-                        state[id].deposits.splice(i, 1);
-                        i--;
-                    }
+            if (bankTotal >= amount) {
+                state[id].bank = bankTotal - amount;
+                state[id].principal = Math.max(0, (state[id].principal || 0) - amount);
+                if (state[id].bank === 0) {
+                    state[id].principal = 0;
                 }
                 state[id].cash += amount;
                 state[id].history.push(`${amount}円 ぎんこうからだした！`);
@@ -1322,6 +1338,16 @@
             if (!state.interestRates) state.interestRates = {};
             if (!state.interestRates[key]) state.interestRates[key] = {};
             state.interestRates[key][id] = result;
+            
+            const currentBank = state[id].bank || 0;
+            const interest = Math.round((currentBank * (result / 100)) / 10) * 10;
+            if (interest > 0) {
+                state[id].bank = currentBank + interest;
+                state[id].history.push(`きんりルーレット(+${result}%)で ${interest}円 ふえた！`);
+            } else {
+                state[id].history.push(`きんりルーレット(+${result}%)を まわした！`);
+            }
+            
             celebrateNear(id === 1 ? 'img-1' : 'img-2', id);
             saveState();
             updateDisplay(id);
@@ -1332,7 +1358,7 @@
         
         const docSnap = await getDoc(stateDoc);
         if (docSnap.exists()) {
-            state = docSnap.data();
+            state = migrateState(docSnap.data());
             document.getElementById('current-year').value = state.currentDate.year;
             document.getElementById('current-month').value = state.currentDate.month;
             updateDisplay(1, false);
